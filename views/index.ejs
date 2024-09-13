@@ -1,0 +1,187 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomePage</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        nav {
+            background-color: #2f575d;
+            box-shadow: 0 4px 16px rgba(101, 139, 111, 0.5);
+            color: aliceblue;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            height: 60px;
+        }
+        h3 {
+            margin: 0;
+            font-size: 24px;
+        }
+        #submit {
+            background-color: #fff;
+            color: #2f575d;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        #submit:hover {
+            background-color: #658b6f;
+            color: white;
+        }
+        #login{
+            background-color: #fff;
+            color: #2f575d;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease; 
+        }
+        #login:hover{
+            background-color: #658b6f;
+            color: white;
+        }
+        @media screen and (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                height: auto;
+            }
+            #submit {
+                margin-top: 10px;
+                width: 100%;
+            }
+        }
+        .complaint-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin: 20px;
+            gap: 20px;
+        }
+
+        .complaint-card {
+            background-color: white;
+            border: 10px solid #658b6f;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px #2f575d;
+            padding: 20px;
+            max-width: 300px;
+            width: 100%;
+        }
+
+        .complaint-card h4 {
+            margin: 0;
+            color: #2f575d;
+        }
+
+        .complaint-card p {
+            color: #333;
+            margin: 10px 0;
+        }
+
+        .complaint-card span {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .like-icon {
+            font-size: 24px;
+            color: green;
+            cursor: pointer;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .liked {
+            color: green;
+            transform: scale(1.1);
+        }
+
+        /* Responsive Design */
+        @media screen and (max-width: 768px) {
+            .complaint-list {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <h3>Vishnu Institute Of Technology Complaint Box</h3>
+        <a href="/submit"><button id="submit" type="submit">Submit a Complaint</button></a> 
+        <a href="/login"><button id="login">Login</button></a>
+    </nav>
+
+    <h2>Complaints:</h2>
+    <div class="complaint-list">
+        <% complaints.forEach(complaint => { %>
+            <div class="complaint-card">
+                <h4><%= complaint.title %></h4>
+                <p><%= complaint.description %></p>
+                <div class="likes">
+                    <i class="fa-regular fa-thumbs-up like-icon" data-id="<%= complaint._id %>"></i>
+                    <span id="like-count-<%= complaint._id %>"><%= complaint.likes || 0 %></span>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+    const likeIcons = document.querySelectorAll('.like-icon');
+        
+        likeIcons.forEach(icon => {
+            icon.addEventListener('click', async function () {
+                const complaintId = this.getAttribute('data-id');
+                const likeCountElement = document.getElementById(`like-count-${complaintId}`);
+                let currentLikes = parseInt(likeCountElement.innerText, 10);
+    
+                // If already liked, stop further action
+                if (this.classList.contains('liked')) return;
+    
+                // Change icon from regular to solid and animate
+                this.classList.remove('fa-regular');
+                this.classList.add('fa-solid', 'liked');
+    
+                // Optimistically update the UI
+                likeCountElement.innerText = currentLikes + 1;
+    
+                try {
+                    // Send a POST request to increment likes
+                    const response = await fetch(`/like/${complaintId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+    
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Update the like count with the value from the server
+                        likeCountElement.innerText = data.likes;
+                    } else {
+                        // Handle server errors (revert the like count if necessary)
+                        console.error('Server error:', await response.text());
+                        likeCountElement.innerText = currentLikes;
+                    }
+                } catch (error) {
+                    console.error('Network error:', error);
+                    // Revert the like count if there was a network error
+                    likeCountElement.innerText = currentLikes;
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html> 
